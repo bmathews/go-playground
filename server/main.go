@@ -45,10 +45,11 @@ func handleMessage(so socketio.Socket, pool redis.Pool, msgs chan Message, msg M
 	c := pool.Get()
 	defer c.Close()
 
-	so.Emit("chat message", jsonString)                 // send to self
-	so.BroadcastTo("chat", "chat message", jsonString)  // send to others
-	c.Do("ZADD", "chat", time.Now().Unix(), jsonString) // add to redis
-	msgs <- msg                                         // send to msg channel for pubsub
+	so.Emit("chat message", jsonString)                           // send to self
+	so.BroadcastTo("chat", "chat message", jsonString)            // send to others
+	_, err := c.Do("ZADD", "chat", time.Now().Unix(), jsonString) // add to redis
+	perror(err)
+	msgs <- msg // send to msg channel for pubsub
 }
 
 // Handle a socket connection
@@ -98,15 +99,15 @@ func runSubs(pool redis.Pool, server socketio.Server) {
 
 // Blocking publish routine for channel
 func runPubs(pool redis.Pool, msgs chan Message) {
-	c := pool.Get()
-	defer c.Close()
-
 	// Forever iterate through msgs channel
 	for msg := range msgs {
+		c := pool.Get()
 		jsonString, err := json.Marshal(msg)
 		perror(err)
 		log.Printf("Got message from channel, publishing: %s", jsonString)
-		c.Do("PUBLISH", "chat", jsonString)
+		_, err2 := c.Do("PUBLISH", "chat", jsonString)
+		perror(err2)
+		c.Close()
 	}
 }
 
