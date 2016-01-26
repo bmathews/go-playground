@@ -31,7 +31,6 @@ func newPool(server, password string) *redis.Pool {
 			if err != nil {
 				return nil, err
 			}
-
 			return c, err
 		},
 		TestOnBorrow: func(c redis.Conn, t time.Time) error {
@@ -61,14 +60,15 @@ func handleMessage(so socketio.Socket, pool redis.Pool, msgs chan Message, msg M
 		request := gorequest.New()
 		_, body, _ := request.Get(fmt.Sprintf("https://en.wikipedia.org/w/api.php?action=opensearch&search=%s&limit=2&namespace=0&format=json", query)).End()
 
-		// Wrap json response in an object
+		// Wrap json response in an object since it comes back as a flat array
 		body = "{ \"data\": " + body + " }"
 
-		// Decode and query with jsonq
+		// Decode into map of string->anything
 		data := map[string]interface{}{}
 		json.NewDecoder(strings.NewReader(body)).Decode(&data)
-		jq := jsonq.NewQuery(data)
 
+		// Query with jsonq
+		jq := jsonq.NewQuery(data)
 		match, _ := jq.String("data", "1", "0")
 		summary, _ := jq.String("data", "2", "0")
 		link, _ := jq.String("data", "3", "0")
@@ -88,16 +88,20 @@ func handleConnection(so socketio.Socket, pool redis.Pool, msgs chan Message) {
 	c := pool.Get()
 	defer c.Close()
 
+	// Join "chat" socket channel
 	so.Join("chat")
 
+	// Fetch chat history from the past 100 hours
 	val, _ := time.ParseDuration("100h")
 	past := time.Now().Add(-val).Unix()
-
 	res, err := redis.Strings(c.Do("ZRANGEBYSCORE", "chat", past, time.Now().Unix()))
 	perror(err)
 
+	// Send chat history to socket
 	log.Printf("Sending chat history %s", strings.Join(res, "\n"))
 	so.Emit("chat history", strings.Join(res, "\n"))
+
+	// Listen for chat messages
 	so.On("chat message", func(jsonMsg string) {
 		log.Printf("Got new message, deserializing: %s", jsonMsg)
 		// Parse text as json and decode into message struct
@@ -113,8 +117,11 @@ func runSubs(pool redis.Pool, server socketio.Server) {
 	c := pool.Get()
 	defer c.Close()
 
+	// Subscribe to redis pubsub channel "chat"
 	psc := redis.PubSubConn{c}
 	psc.Subscribe("chat")
+
+	// Forever switch on the eventual values of psc.Receive()
 	for {
 		switch v := psc.Receive().(type) {
 		case redis.Message:
@@ -128,13 +135,13 @@ func runSubs(pool redis.Pool, server socketio.Server) {
 
 // Blocking publish routine for channel
 func runPubs(pool redis.Pool, msgs chan Message) {
-	// Forever iterate through msgs channel
+	// Forever iterate through eventual values in the msgs channel
 	for msg := range msgs {
 		c := pool.Get()
 		jsonString, err := json.Marshal(msg)
 		perror(err)
 		log.Printf("Got message from channel, publishing: %s", jsonString)
-		_, err2 := c.Do("PUBLISH", "chat", jsonString)
+		_, err2 := c.Do("PUBLISH", "chat", jsonString) // publish to redis chat channel
 		perror(err2)
 		c.Close()
 	}
