@@ -27,6 +27,7 @@ body {
 }
 
 #messages li {
+  display: flex;
 }
 
 #messages li > div {
@@ -53,6 +54,7 @@ body {
 
 #messages .message {
   padding-left: 0;
+  flex: 1;
 }
 form {
   display: flex;

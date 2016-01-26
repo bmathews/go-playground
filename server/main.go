@@ -3,8 +3,11 @@ package main
 import (
 	"encoding/json"
 	"flag"
+	"fmt"
 	"github.com/garyburd/redigo/redis"
 	"github.com/googollee/go-socket.io"
+	"github.com/jmoiron/jsonq"
+	"github.com/parnurzeal/gorequest"
 	"log"
 	"net/http"
 	"strings"
@@ -49,7 +52,28 @@ func handleMessage(so socketio.Socket, pool redis.Pool, msgs chan Message, msg M
 	so.BroadcastTo("chat", "chat message", jsonString)            // send to others
 	_, err := c.Do("ZADD", "chat", time.Now().Unix(), jsonString) // add to redis
 	perror(err)
+
 	msgs <- msg // send to msg channel for pubsub
+
+	log.Printf("Has prefix? %s, %s", msg.Text, strings.HasPrefix(msg.Text, "/wiki "))
+	if strings.HasPrefix(msg.Text, "/wiki ") {
+		query := msg.Text[5:]
+		request := gorequest.New()
+		_, body, _ := request.Get(fmt.Sprintf("https://en.wikipedia.org/w/api.php?action=opensearch&search=%s&limit=2&namespace=0&format=json", query)).End()
+
+		body = "{ \"data\": " + body + " }"
+
+		data := map[string]interface{}{}
+		json.NewDecoder(strings.NewReader(body)).Decode(&data)
+		jq := jsonq.NewQuery(data)
+
+		match, _ := jq.String("data", "1", "0")
+		summary, _ := jq.String("data", "2", "0")
+		link, _ := jq.String("data", "3", "0")
+
+		m := Message{User: "Bot", Text: fmt.Sprintf("<a href=\"%s\">%s</a>: %s", link, match, summary), Timestamp: time.Now()}
+		handleMessage(so, pool, msgs, m)
+	}
 }
 
 // Handle a socket connection
