@@ -55,14 +55,16 @@ func handleMessage(so socketio.Socket, pool redis.Pool, msgs chan Message, msg M
 
 	msgs <- msg // send to msg channel for pubsub
 
-	log.Printf("Has prefix? %s, %s", msg.Text, strings.HasPrefix(msg.Text, "/wiki "))
+	// If the message starts with /wiki, hit the wiki search api with that query and send result
 	if strings.HasPrefix(msg.Text, "/wiki ") {
 		query := msg.Text[5:]
 		request := gorequest.New()
 		_, body, _ := request.Get(fmt.Sprintf("https://en.wikipedia.org/w/api.php?action=opensearch&search=%s&limit=2&namespace=0&format=json", query)).End()
 
+		// Wrap json response in an object
 		body = "{ \"data\": " + body + " }"
 
+		// Decode and query with jsonq
 		data := map[string]interface{}{}
 		json.NewDecoder(strings.NewReader(body)).Decode(&data)
 		jq := jsonq.NewQuery(data)
@@ -71,7 +73,10 @@ func handleMessage(so socketio.Socket, pool redis.Pool, msgs chan Message, msg M
 		summary, _ := jq.String("data", "2", "0")
 		link, _ := jq.String("data", "3", "0")
 
+		// Create a new message
 		m := Message{User: "Bot", Text: fmt.Sprintf("<a href=\"%s\">%s</a>: %s", link, match, summary), Timestamp: time.Now()}
+
+		// Send
 		handleMessage(so, pool, msgs, m)
 	}
 }
