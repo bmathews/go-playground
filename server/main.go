@@ -4,14 +4,15 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/garyburd/redigo/redis"
-	"github.com/googollee/go-socket.io"
-	"github.com/jmoiron/jsonq"
-	"github.com/parnurzeal/gorequest"
 	"log"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/garyburd/redigo/redis"
+	"github.com/googollee/go-socket.io"
+	"github.com/jmoiron/jsonq"
+	"github.com/parnurzeal/gorequest"
 )
 
 type Message struct {
@@ -118,7 +119,7 @@ func runSubs(pool redis.Pool, server socketio.Server) {
 	defer c.Close()
 
 	// Subscribe to redis pubsub channel "chat"
-	psc := redis.PubSubConn{c}
+	psc := redis.PubSubConn{Conn: c}
 	psc.Subscribe("chat")
 
 	// Forever switch on the eventual values of psc.Receive()
