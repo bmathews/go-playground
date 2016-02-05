@@ -15,7 +15,7 @@ import (
 	"github.com/parnurzeal/gorequest"
 )
 
-type Message struct {
+type message struct {
 	User      string    `json:"user"`
 	Text      string    `json:"text"`
 	Timestamp time.Time `json:"timestamp"`
@@ -42,7 +42,7 @@ func newPool(server, password string) *redis.Pool {
 }
 
 // Handle a socket chat message
-func handleMessage(so socketio.Socket, pool redis.Pool, msgs chan Message, msg Message) {
+func handleMessage(so socketio.Socket, pool redis.Pool, msgs chan message, msg message) {
 	jsonString, _ := json.Marshal(msg)
 
 	c := pool.Get()
@@ -75,7 +75,7 @@ func handleMessage(so socketio.Socket, pool redis.Pool, msgs chan Message, msg M
 		link, _ := jq.String("data", "3", "0")
 
 		// Create a new message
-		m := Message{User: "Bot", Text: fmt.Sprintf("<a href=\"%s\">%s</a>: %s", link, match, summary), Timestamp: time.Now()}
+		m := message{User: "Bot", Text: fmt.Sprintf("<a href=\"%s\">%s</a>: %s", link, match, summary), Timestamp: time.Now()}
 
 		// Send
 		handleMessage(so, pool, msgs, m)
@@ -83,7 +83,7 @@ func handleMessage(so socketio.Socket, pool redis.Pool, msgs chan Message, msg M
 }
 
 // Handle a socket connection
-func handleConnection(so socketio.Socket, pool redis.Pool, msgs chan Message) {
+func handleConnection(so socketio.Socket, pool redis.Pool, msgs chan message) {
 	log.Printf("New connection")
 
 	c := pool.Get()
@@ -106,7 +106,7 @@ func handleConnection(so socketio.Socket, pool redis.Pool, msgs chan Message) {
 	so.On("chat message", func(jsonMsg string) {
 		log.Printf("Got new message, deserializing: %s", jsonMsg)
 		// Parse text as json and decode into message struct
-		var message Message
+		var message message
 		err := json.NewDecoder(strings.NewReader(jsonMsg)).Decode(&message)
 		perror(err)
 		handleMessage(so, pool, msgs, message)
@@ -135,7 +135,7 @@ func runSubs(pool redis.Pool, server socketio.Server) {
 }
 
 // Blocking publish routine for channel
-func runPubs(pool redis.Pool, msgs chan Message) {
+func runPubs(pool redis.Pool, msgs chan message) {
 	// Forever iterate through eventual values in the msgs channel
 	for msg := range msgs {
 		c := pool.Get()
@@ -168,7 +168,7 @@ func main() {
 	perror(err)
 
 	// Make msgs channel
-	msgs := make(chan Message)
+	msgs := make(chan message)
 
 	// Start routines
 	go runSubs(*pool, *server)
