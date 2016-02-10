@@ -188,7 +188,7 @@ func main() {
 	http.Handle("/socket.io/", server)
 
 	// Serve static files
-	http.Handle("/", http.FileServer(http.Dir("./client")))
+	http.Handle("/", http.FileServer(http.Dir("./public")))
 
 	// Listen and serve
 	log.Printf("Server %s up at localhost:%s...", *id, *httpPort)
