@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -148,9 +150,21 @@ func runPubs(pool redis.Pool, msgs chan message) {
 	}
 }
 
+func logWrapper(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		dir, _ := filepath.Abs(filepath.Dir(os.Args[0]))
+		if _, err := os.Stat(dir + "/public" + r.URL.Path); err == nil {
+			log.Println("200: ", dir)
+		} else {
+			log.Println("404: ", dir)
+		}
+		h.ServeHTTP(w, r)
+	})
+}
+
 var (
 	pool          *redis.Pool
-	httpPort      = flag.String("port", "5000", "")
+	httpPort      = flag.String("port", "8080", "")
 	id            = flag.String("id", "id", "")
 	redisServer   = flag.String("redisServer", ":6379", "")
 	redisPassword = flag.String("redisPassword", "", "")
@@ -188,11 +202,12 @@ func main() {
 	http.Handle("/socket.io/", server)
 
 	// Serve static files
-	http.Handle("/", http.FileServer(http.Dir("./public")))
+	dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	http.Handle("/", logWrapper(http.FileServer(http.Dir(dir+"/public"))))
 
 	// Listen and serve
 	log.Printf("Server %s up at localhost:%s...", *id, *httpPort)
-	log.Fatal(http.ListenAndServe(":"+*httpPort, nil))
+	log.Fatal(http.ListenAndServe(":"+*httpPort, logWrapper(http.DefaultServeMux)))
 }
 
 func perror(err error) {
