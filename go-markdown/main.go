@@ -11,7 +11,7 @@ import (
 type fileList []string
 
 func (i *fileList) String() string {
-	return "my string representation"
+	return "List of files"
 }
 
 func (i *fileList) Set(value string) error {
