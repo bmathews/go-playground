@@ -1,18 +1,22 @@
 sudo: false
+
+language: go
+
 services:
-- docker
+  - docker
+
 before_install:
-- export COMMIT=${TRAVIS_COMMIT::8}
-- export REPO=brianmathews/go-chat
-- export TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo $TRAVIS_BRANCH
-  ; fi`
-- docker build -f Dockerfile -t $REPO:$COMMIT .
-- docker tag $REPO:$COMMIT $REPO:$TAG
-- docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
+  - export COMMIT=${TRAVIS_COMMIT::8}
+  - export REPO=brianmathews/go-chat
+  - export TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo $TRAVIS_BRANCH; fi`
+  - docker build -f Dockerfile -t $REPO:$COMMIT .
+  - docker tag $REPO:$COMMIT $REPO:$TAG
+  - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
+
 after_success:
-- '[ "${TRAVIS_PULL_REQUEST}" = "false" ] && docker login -e $DOCKER_EMAIL -u $DOCKER_USER
-  -p $DOCKER_PASS || false'
-- '[ "${TRAVIS_PULL_REQUEST}" = "false" ] && docker push $REPO || false'
+  - '[ "${TRAVIS_PULL_REQUEST}" = "false" ] && docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS || false'
+  - '[ "${TRAVIS_PULL_REQUEST}" = "false" ] && docker push $REPO || false'
+
 env:
   global:
   - secure: LdqkiQLDuRGNsDfP/07w0rg+EEDgh1xjjWL/bSXBf1w7rVALykU2Y/Ypr5h5ORZVR34rhKuJdis75OVosihv9kpPd592qVcluydxwzHN9Wq+bYjn3ILIZ8jPQqWcKXJFVyDC9h4T8RMajmL3h2z+sT7hj4SlFQq1lIdJEGV9PamQhww08zi/yPNeh2Qr+wP2Yad54uwT7+ets4obGqaOA6urXgGMud9N7jRasQJoINuqlkP1l/EEk4vcqwNp8FlZ8ippGJUFLRi9BX1v5MZnnTKSDo7FJpVmuy/tl3tBchll4XoT6vWepAglNTqHeg4TAoRkcz8VPK/PfTMThAsEgENuqOdC8VdYAh9PJqYw2CgDd5G//3gYJq+U9HKJHhCihvp4MblGFRAoeHbvXCdARJ2YwK3pBSIVpMw8V1oalnBZZRF14g+Gaen8jaqIkRQmRjgU8sTBZ03hXUEkcXgl3qUVLWZdffNV3sfvXDrw6AGR0VHk8AteWXwaKHkCltUJPE6xMHTbQzaGce0pZzLZdv3nvEa5uD9gktLS/s+NPtQaAmkuyWzPycqq8K+ZPgfPfkuiEBV9OZXAfQsvTm19nO6oU2YC0ZwB0HOpAXaeoqEdQ+bSN+v1Dz3W113oFa5qR5OnQL5HNhcKTwpHrFqcSDM3nPjF6s7PByEtar08BzQ=
