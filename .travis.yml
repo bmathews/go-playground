@@ -9,9 +9,7 @@ before_install:
   - export COMMIT=${TRAVIS_COMMIT::8}
   - export REPO=brianmathews/go-chat
   - export TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo $TRAVIS_BRANCH; fi`
-  - docker build -f Dockerfile -t $REPO:$COMMIT .
-  - docker tag $REPO:$COMMIT $REPO:$TAG
-  - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
+  - docker build -f Dockerfile -t $REPO:$COMMIT-travis-$TRAVIS_BUILD_NUMBER .
 
 after_success:
   - '[ "${TRAVIS_PULL_REQUEST}" = "false" ] && docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS || false'
