@@ -15,7 +15,7 @@ RUN go install -v .
 RUN go build -o main .
 
 # Set run command
-CMD ["/go/src/app/main"]
+CMD ["/go/src/app/main", "--redisServer", "echo ${REDIS_SERVER}"]
 
 # expose port
 EXPOSE 8080
