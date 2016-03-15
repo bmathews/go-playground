@@ -1,16 +1,20 @@
 sudo: false
-
 services:
-  - docker
-
+- docker
 before_install:
-  - export COMMIT=${TRAVIS_COMMIT::8}
-  - export REPO=bmathews/go-chat
-  - export TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo $TRAVIS_BRANCH ; fi`
-  - docker build -f Dockerfile -t $REPO:$COMMIT .
-  - docker tag $REPO:$COMMIT $REPO:$TAG
-  - docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
-
+- export COMMIT=${TRAVIS_COMMIT::8}
+- export REPO=brianmathews/go-chat
+- export TAG=`if [ "$TRAVIS_BRANCH" == "master" ]; then echo "latest"; else echo $TRAVIS_BRANCH
+  ; fi`
+- docker build -f Dockerfile -t $REPO:$COMMIT .
+- docker tag $REPO:$COMMIT $REPO:$TAG
+- docker tag $REPO:$COMMIT $REPO:travis-$TRAVIS_BUILD_NUMBER
 after_success:
-  - '[ "${TRAVIS_PULL_REQUEST}" = "false" ] && docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS || false'
-  - '[ "${TRAVIS_PULL_REQUEST}" = "false" ] && docker push $REPO || false'
+- '[ "${TRAVIS_PULL_REQUEST}" = "false" ] && docker login -e $DOCKER_EMAIL -u $DOCKER_USER
+  -p $DOCKER_PASS || false'
+- '[ "${TRAVIS_PULL_REQUEST}" = "false" ] && docker push $REPO || false'
+env:
+  global:
+  - secure: LdqkiQLDuRGNsDfP/07w0rg+EEDgh1xjjWL/bSXBf1w7rVALykU2Y/Ypr5h5ORZVR34rhKuJdis75OVosihv9kpPd592qVcluydxwzHN9Wq+bYjn3ILIZ8jPQqWcKXJFVyDC9h4T8RMajmL3h2z+sT7hj4SlFQq1lIdJEGV9PamQhww08zi/yPNeh2Qr+wP2Yad54uwT7+ets4obGqaOA6urXgGMud9N7jRasQJoINuqlkP1l/EEk4vcqwNp8FlZ8ippGJUFLRi9BX1v5MZnnTKSDo7FJpVmuy/tl3tBchll4XoT6vWepAglNTqHeg4TAoRkcz8VPK/PfTMThAsEgENuqOdC8VdYAh9PJqYw2CgDd5G//3gYJq+U9HKJHhCihvp4MblGFRAoeHbvXCdARJ2YwK3pBSIVpMw8V1oalnBZZRF14g+Gaen8jaqIkRQmRjgU8sTBZ03hXUEkcXgl3qUVLWZdffNV3sfvXDrw6AGR0VHk8AteWXwaKHkCltUJPE6xMHTbQzaGce0pZzLZdv3nvEa5uD9gktLS/s+NPtQaAmkuyWzPycqq8K+ZPgfPfkuiEBV9OZXAfQsvTm19nO6oU2YC0ZwB0HOpAXaeoqEdQ+bSN+v1Dz3W113oFa5qR5OnQL5HNhcKTwpHrFqcSDM3nPjF6s7PByEtar08BzQ=
+  - secure: Gl9ILovm/6O8sa1dDxxI5p2T9x6sbXhPUybdEkAk+Rdi6M+jlpKejVqZizCUeOSnMcNnA+QmSkFe6uMEcIs49BVbuQGO1BMRc/8ncOhsApfgosHDYkjmj+ZRPJU/BodOnZrDLXqpnqatK5SZQc8vKss2LCjTIq7Ee5fCzg+XitD6yO6+GMzCIVoe+14fb45eUDk+lkSdVeRhWNihSG2K33DPlhIOhRJqcmdor3ixuivaLniNK4DX+wZVLk3aEdhx4CSgMfOy5+zCSh67dQd1u2zbRDst315LTYDMFsNgMj6Jbn1hrL3CCMaxnpqcVDgjjbKjXzFoUENpiGKyuY+j1wdYQhtD7reYbcXMguHWJQ/tgNu9SBwrTrOM8+8OGbkIrTpDngUmlD6xiOq5ORK9LQG+040yuA2tPMj2XE05syTZ6o7hVqxgcn6t7MyUEg0W1p49c8uFZ9rhE4oZASSzfTmoxYK0lBCbyXnePnomdxEs9FoeU2AgpvNlHQKgn1EZLhefmBXE2UKjrtmXcyh1AQqLBhikdb+RSH+uhJV6xJdJf7YvCMEfKfRbvs4ifdIuuPWljf/FdfuwOR2bCPUavjQ1No+vhYoQTaoYkaWBi1zSCc4RJoS6aNVGhuQdeVVck9ThnmNRBtiSe1OXYKMxI8hlSGfoe8yp0/Ug1pTCXv8=
+  - secure: ORDp/YkBqAauMNsfs7xdk08ILobGamOIx+3cU8Np0UJqtXa2rthYaV+LeRyDRSZjohvGLXNOA4qeJ+TYa/zidjX0kAcoz9DDpOLqIgC1u1Mx2dY0dH6F0Gjh6AXKeY1HemtFYlKiU+Hj168ypmi8ymq6zIuav8e0Gg836LoF/f+PWaNcGosm2QFzqiPtR2+OPDmZZT1GPxCGgV3kFSM7tvjn6ohB4cg4Ef5h3IDu2UyWebsEjy4aoHcslyVgziN+X3XC3/eezvB/ktKa2G65eUcXwf62tbISe4YpRpJTqoSSmyf4ebJQtjfI9aKGcDD6j+oNVTXkpQ79w18AgdS5E9jz+c5mFnD0LAdUpZDaMmdjzdOSk8JSXYA8hgk0YP9kpL6fCv+8RWu2lKKst+v22V0nq1mw+eBmh4YfOR2nN6PXhxStdvQldd2TnTgAs7CeDk+wE4VrWP1BrwaRdUVPC3iWA48SiPcD2yx2JXtymOGVvSZDV+NWX04Ts/qqs3xrMmn3M6dNURXFsaJztJ+rrPB9Qe0SG4oAzzqNOcYLhgaLVOwaMoR7jM+fLRoTHIvS1TO16m4osBCIMB7X+IYGOsr+JUblRrXBZjH0VexbycF2AdSN7fiPn2ZziLM3Tl4wfvATihZF4KOpdwozia/uos0NwdeAf7cF9n++D11HWJs=
