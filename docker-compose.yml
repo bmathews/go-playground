@@ -1,0 +1,15 @@
+version: '2'
+services:
+  web:
+    build: .
+    command: '/go/src/app/main --redisServer=redis:6379'
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/go/src/app
+    links:
+      - redis
+    depends_on:
+      - redis
+  redis:
+    image: redis
